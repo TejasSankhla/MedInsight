@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import "../App.css";
+import extractText from "../Tessdata/script.cjs";
+
 function MedicalForm() {
+  const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,9 +16,8 @@ function MedicalForm() {
     bmi: 31.992578,
     dpf: 0.471876,
     age: 33.240885,
-    file: null,
+    file: null
   });
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let roundedValue = value;
@@ -26,7 +28,6 @@ function MedicalForm() {
       name !== "name" &&
       name !== "email" &&
       name !== "gender" &&
-      name !== "file" &&
       !isNaN(value) &&
       value !== ""
     ) {
@@ -41,62 +42,68 @@ function MedicalForm() {
   };
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    setFile(file);
     setFormData({
       ...formData,
-      file: file,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     let my_data = 0;
+    if (file) {
+      console.log("OKAYYY")
+      let yuvi=extractText(file);
+      console.log(yuvi)
+    }
+    else {
+      try {
+        console.log("sending data");
+        console.log(formData);
+        const response = await fetch("http://127.0.0.1:5000/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
 
-    try {
-      console.log("sending data");
-      console.log(formData);
-      const response = await fetch("http://127.0.0.1:5000/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Received data from backend:", data);
-        // Display an alert with the received data
-        my_data = JSON.stringify(data);
-        my_data *= 100;
-        my_data = Math.floor(my_data);
-        if (my_data <= 25) {
-          alert(
-            "Percentage of you having diabetes is : " +
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Received data from backend:", data);
+          // Display an alert with the received data
+          my_data = JSON.stringify(data);
+          my_data *= 100;
+          my_data = Math.floor(my_data);
+          if (my_data <= 25) {
+            alert(
+              "Percentage of you having diabetes is : " +
               my_data +
               "% \n Maintain a healthy lifestyle by incorporating regular exercise and a balanced diet rich in fruits, vegetables, and whole grains. Schedule regular check-ups with your healthcare provider to monitor your health status and discuss any concerns or changes in symptoms."
-          );
-        } else if (my_data > 25 && my_data <= 50) {
-          alert(
-            "Percentage of you having diabetes is : " +
+            );
+          } else if (my_data > 25 && my_data <= 50) {
+            alert(
+              "Percentage of you having diabetes is : " +
               my_data +
               "% \n Increase awareness about diabetes symptoms and risk factors. Consider lifestyle modifications such as weight loss (if overweight), reducing sugar intake, and avoiding sedentary behaviors. Consult with a healthcare professional for personalized advice and screening tests."
-          );
-        } else if (my_data > 50 && my_data <= 75) {
-          alert(
-            "Percentage of you having diabetes is : " +
+            );
+          } else if (my_data > 50 && my_data <= 75) {
+            alert(
+              "Percentage of you having diabetes is : " +
               my_data +
               "% \n Take proactive steps to manage and reduce risk factors associated with diabetes, such as controlling blood sugar levels, maintaining a healthy weight, and managing stress.Monitor blood glucose levels regularly, especially if there's a family history of diabetes or other risk factors present.Discuss with a healthcare provider about starting preventive measures or medications to lower the risk of developing diabetes."
-          );
-        } else {
-          alert(
-            "Percentage of you having diabetes is : " +
+            );
+          } else {
+            alert(
+              "Percentage of you having diabetes is : " +
               my_data +
               "% \n Prioritize comprehensive diabetes prevention strategies, including close monitoring of blood sugar levels, adherence to a diabetic-friendly diet, regular exercise, and weight management.Work closely with healthcare professionals, including endocrinologists, dietitians, and diabetes educators, to develop a personalized management plan.Consider genetic counseling to understand the hereditary risk factors and potential preventive measures."
-          );
+            );
+          }
+        } else {
+          console.error("Failed to send form data");
         }
-      } else {
-        console.error("Failed to send form data");
+      } catch (error) {
+        console.error("Error sending form data:", error);
       }
-    } catch (error) {
-      console.error("Error sending form data:", error);
     }
   };
 
@@ -312,7 +319,7 @@ function MedicalForm() {
                   type="file"
                   id="file-upload"
                   name="file"
-                  accept=".pdf, .doc, .docx"
+                  accept=".pdf, .doc, .docx, .webp, .jpeg, .jpg"
                   onChange={handleFileChange}
                   className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -322,8 +329,7 @@ function MedicalForm() {
           <div class="submit-btn">
             <button
               type="submit"
-              className=" bg-black text-white  rounded-md border-0 py-1.5 px-2 text-center mt-5  "   
-            >
+              className=" bg-black text-white  rounded-md border-0 py-1.5 px-2 text-center mt-5  " onClick={handleSubmit}>
               SUBMIT
             </button>
           </div>
